@@ -7,30 +7,43 @@ import Navigation from './components/Navigation';
 import TodoForm from './components/TodoForm';
 import TodoList from './components/TodoList';
 
-const API = 'https://jsonplaceholder.typicode.com';
+const API = 'http://localhost:3000';
 
 function App() {
     const [items, setItems] = useState([]);
 
     useEffect(() => {
-        fetch(`${API}/todos?userId=1`)
+        fetch(`${API}/todos`)
             .then((response) => response.json())
             .then((result) => setItems(result));
     }, []);
 
     const toggleItemState = (id) => {
-        setItems((prev) => {
-            return prev.map((item) => {
-                if (id === item.id) {
-                    return {
-                        ...item,
-                        completed: !item.completed,
-                    };
-                } else {
-                    return item;
-                }
+        const item = items.find((i) => i.id === id);
+
+        if (!item) return;
+
+        fetch(`${API}/todos/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                completed: !item.completed,
+            }),
+            headers: {
+                'content-type': 'application/json; charset=UTF-8',
+            },
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                setItems((prev) => {
+                    return prev.map((item) => {
+                        if (id === item.id) {
+                            return result;
+                        } else {
+                            return item;
+                        }
+                    });
+                });
             });
-        });
     };
 
     const addTask = (task) => {
@@ -39,7 +52,11 @@ function App() {
             body: JSON.stringify({
                 userId: 1,
                 title: task,
+                completed: false,
             }),
+            headers: {
+                'content-type': 'application/json; charset=UTF-8',
+            },
         })
             .then((response) => response.json())
             .then((result) => {
